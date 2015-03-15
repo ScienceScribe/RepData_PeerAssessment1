@@ -104,3 +104,34 @@ medianFilled = format(round(median(dataStepsPerDay$steps), 0), nsmall=0)
 For the filled-in data, the mean step number per day is `r meanFilled` steps and the median for the step number per day is `r medianFilled` steps. The means for the filled-in data and non-filled-in data are identical and the medians differ by only 1 step. Thus, imputing missing data did not have much impact on the estimates of the total step number per day.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Create new column indicating whether date is a weekday or weekend day.
+```{r week}
+data$day <- weekdays(as.Date(data$date))
+data$daycategory <- revalue(data$day, c("Monday" = "weekday", "Tuesday" = "weekday", 
+                                "Wednesday" = "weekday", "Thursday" = "weekday",
+                                "Friday" = "weekday", "Saturday" = "weekend",
+                                "Sunday" = "weekend"))
+data$daycategory <- as.factor(data$daycategory)
+```
+
+Create a panel plot showing the average step number for weekdays or weekend days over the 5-minute intervals.
+```{r weekdayweekend}
+#group by daycategory and interval
+dataGroupedByDayCatInterval<- group_by(data, daycategory, interval)
+dataMeanStepsPerInterval <- summarise_each(dataGroupedByDayCatInterval, 
+                                           funs(mean), steps)
+dataMeanStepsPerInterval$interval <- c(seq(0,1435,5), seq(0,1435,5))
+
+#load and start ggplot2
+library(ggplot2)
+a <- ggplot(dataMeanStepsPerInterval, aes(interval, steps))
+
+#add layers to ggplot
+a + geom_line() + facet_grid(daycategory ~ .) + 
+  labs(x="time of day in minutes from midnight") +
+  labs(y="average step number") + 
+  labs(title="Pattern of Average Daily Steps on Weekdays and Weekend Days") +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.4, hjust=1)) +
+  scale_x_continuous(breaks=seq(0, 1450, 50))
+
